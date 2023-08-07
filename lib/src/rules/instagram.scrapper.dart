@@ -2,20 +2,28 @@ import 'dart:convert';
 
 import 'package:link_preview_generator/src/models/types.dart';
 import 'package:link_preview_generator/src/utils/scrapper.dart';
-import 'package:universal_html/html.dart';
+
+import '../parser/html_scraper.dart';
+import '../parser/matcher.dart';
+import '../parser/matcher_groups.dart';
 
 class InstagramScrapper {
-  static WebInfo scrape(HtmlDocument doc, String data, String url) {
+  static WebInfo scrape(HtmlScraper scraper, String data, String url) {
     try {
       final dynamic scrappedData = json.decode(data);
+
+      List<Matcher> domainMatchers = LinkPreviewScrapper.getDomainMatchers('domain');
+      List<Matcher> iconMatchers = LinkPreviewScrapper.getIconMatchers('icon');
+
+      Map<String, String> results = scraper.parseHtml(MatcherGroups([domainMatchers, iconMatchers]));
 
       return WebInfo(
         description: scrappedData['title'] ??
             scrappedData['graphql']['shortcode_media']['edge_media_to_caption']
                 ['edges'][0]['node']['text'] ??
             '',
-        domain: LinkPreviewScrapper.getDomain(doc, url) ?? url,
-        icon: LinkPreviewScrapper.getIcon(doc, url) ?? '',
+        domain: LinkPreviewScrapper.getDomain(results['domain'], url) ?? url,
+        icon: LinkPreviewScrapper.getIcon(results['icon'], url) ?? '',
         image: scrappedData['graphql']['shortcode_media']['display_url'] ?? '',
         video: '',
         title: scrappedData['graphql']['shortcode_media']

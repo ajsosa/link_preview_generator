@@ -1,63 +1,73 @@
-import 'package:collection/collection.dart';
 import 'package:link_preview_generator/src/models/types.dart';
-import 'package:link_preview_generator/src/utils/analyzer.dart';
 import 'package:link_preview_generator/src/utils/scrapper.dart';
 import 'package:universal_html/html.dart';
 
+import '../parser/html_scraper.dart';
+import '../parser/matcher.dart';
+import '../parser/matcher_groups.dart';
+
 class DefaultScrapper {
-  static WebInfo scrape(HtmlDocument doc, String url) {
+  static WebInfo scrape(HtmlScraper scraper, String url) {
+
+    List<Matcher> domainMatchers = LinkPreviewScrapper.getDomainMatchers('domain');
+    List<Matcher> iconDefaultMatchers = LinkPreviewScrapper.getIconMatchers('iconDefault');
+    List<Matcher> baseUrlMatchers = LinkPreviewScrapper.getBaseUrlMatchers('base');
+
+    List<Matcher> mainTitleMatchers = LinkPreviewScrapper.getPrimaryTitleMatchers('mainTitle');
+    List<Matcher> secondTitleMatchers = LinkPreviewScrapper.getSecondaryTitleMatchers('secondTitle');
+    List<Matcher> lastTitleMatchers = LinkPreviewScrapper.getLastResortTitleMatchers('lastTitle');
+
+    List<Matcher> imageMatchers = [
+      Matcher(key: 'image', tag: 'meta', matchAttrName: 'property', matchAttrValue: 'og:logo', attrName: 'content'),
+      Matcher(key: 'image', tag: 'meta', matchAttrName: 'itemprop', matchAttrValue: 'logo', attrName: 'content'),
+      Matcher(key: 'image', tag: 'img', matchAttrName: 'itemprop', matchAttrValue: 'logo', attrName: 'src'),
+      Matcher(key: 'image', tag: 'meta', matchAttrName: 'property', matchAttrValue: 'og:image', attrName: 'content'),
+      Matcher(key: 'image', tag: 'img', matchAttrName: 'class*', matchAttrValue: 'logo', attrName: 'content', caseInsensitive: true),
+      Matcher(key: 'image', tag: 'img', matchAttrName: 'src*', matchAttrValue: 'logo', attrName: 'content', caseInsensitive: true),
+      Matcher(key: 'image', tag: 'meta', matchAttrName: 'property', matchAttrValue: 'og:image:secure_url', attrName: 'content'),
+      Matcher(key: 'image', tag: 'meta', matchAttrName: 'property', matchAttrValue: 'og:image:url', attrName: 'content'),
+      Matcher(key: 'image', tag: 'meta', matchAttrName: 'property', matchAttrValue: 'og:image', attrName: 'content'),
+      Matcher(key: 'image', tag: 'meta', matchAttrName: 'name', matchAttrValue: 'twitter:image:src', attrName: 'content'),
+      Matcher(key: 'image', tag: 'meta', matchAttrName: 'name', matchAttrValue: 'twitter:image', attrName: 'content'),
+      Matcher(key: 'image', tag: 'meta', matchAttrName: 'itemprop', matchAttrValue: 'image', attrName: 'content'),
+    ];
+
+    List<Matcher> iconMatchers = [
+      Matcher(key: 'icon', tag: 'meta', matchAttrName: 'property', matchAttrValue: 'og:logo', attrName: 'content'),
+      Matcher(key: 'icon', tag: 'meta', matchAttrName: 'itemprop', matchAttrValue: 'logo', attrName: 'content'),
+      Matcher(key: 'icon', tag: 'img', matchAttrName: 'itemprop', matchAttrValue: 'logo', attrName: 'src'),
+    ];
+
+    // Purposely left out the <p> matcher that was implemented in the original. Can always add later if we need it.
+    List<Matcher> descriptionMatchers = [
+      Matcher(key: 'description', tag: 'meta', matchAttrName: 'name', matchAttrValue: 'description', attrName: 'content'),
+      Matcher(key: 'description', tag: 'meta', matchAttrName: 'name', matchAttrValue: 'twitter:description', attrName: 'content'),
+    ];
+
+    Map<String, String> results = scraper.parseHtml(MatcherGroups([
+      baseUrlMatchers,
+      imageMatchers,
+      iconMatchers,
+      descriptionMatchers,
+      domainMatchers,
+      iconDefaultMatchers,
+      mainTitleMatchers,
+      secondTitleMatchers,
+      lastTitleMatchers]));
+
     try {
-      var baseUrl = LinkPreviewScrapper.getBaseUrl(doc, url);
-
-      var image = [
-        LinkPreviewScrapper.getAttrOfDocElement(
-            doc, 'meta[property="og:logo"]', 'content'),
-        LinkPreviewScrapper.getAttrOfDocElement(
-            doc, 'meta[itemprop="logo"]', 'content'),
-        LinkPreviewScrapper.getAttrOfDocElement(
-            doc, 'img[itemprop="logo"]', 'src'),
-        LinkPreviewScrapper.getAttrOfDocElement(
-            doc, "meta[property='og:image']", 'content'),
-        LinkPreviewScrapper.getAttrOfDocElement(
-            doc, 'img[class*="logo" i]', 'src'),
-        LinkPreviewScrapper.getAttrOfDocElement(
-            doc, 'img[src*="logo" i]', 'src'),
-        LinkPreviewScrapper.getAttrOfDocElement(
-            doc, 'meta[property="og:image:secure_url"]', 'content'),
-        LinkPreviewScrapper.getAttrOfDocElement(
-            doc, 'meta[property="og:image:url"]', 'content'),
-        LinkPreviewScrapper.getAttrOfDocElement(
-            doc, 'meta[property="og:image"]', 'content'),
-        LinkPreviewScrapper.getAttrOfDocElement(
-            doc, 'meta[name="twitter:image:src"]', 'content'),
-        LinkPreviewScrapper.getAttrOfDocElement(
-            doc, 'meta[name="twitter:image"]', 'content'),
-        LinkPreviewScrapper.getAttrOfDocElement(
-            doc, 'meta[itemprop="image"]', 'content'),
-      ]
-          .where((i) => LinkPreviewAnalyzer.isNotEmpty(i))
-          .map((i) => LinkPreviewScrapper.fixRelativeUrls(baseUrl, i!))
-          .firstOrNull;
-
-      var icon = [
-        LinkPreviewScrapper.getAttrOfDocElement(
-            doc, 'meta[property="og:logo"]', 'content'),
-        LinkPreviewScrapper.getAttrOfDocElement(
-            doc, 'meta[itemprop="logo"]', 'content'),
-        LinkPreviewScrapper.getAttrOfDocElement(
-            doc, 'img[itemprop="logo"]', 'src'),
-      ]
-          .where((i) => LinkPreviewAnalyzer.isNotEmpty(i))
-          .map((i) => LinkPreviewScrapper.fixRelativeUrls(baseUrl, i!))
-          .firstOrNull;
+      var baseUrl = LinkPreviewScrapper.getBaseUrl(results['base'], url);
+      var image = results['image'] != null ? LinkPreviewScrapper.fixRelativeUrls(baseUrl, results['image']!) : null;
+      var icon = results['icon'] != null ? LinkPreviewScrapper.fixRelativeUrls(baseUrl, results['icon']!) : null;
 
       return WebInfo(
-        description: _getDescription(doc) ?? '',
-        domain: LinkPreviewScrapper.getDomain(doc, url) ?? url,
-        icon: LinkPreviewScrapper.getIcon(doc, url) ?? icon ?? '',
-        image: image ?? _getDocImage(doc, url) ?? '',
+        description: results['description'] ?? '',
+        domain: LinkPreviewScrapper.getDomain(results['domain'], url) ?? url,
+        icon: LinkPreviewScrapper.getIcon(results['iconDefault'], url) ?? icon ?? '',
+        // TODO: Implement the last resort image scraping
+        image: image ?? '',//_getDocImage(doc, url) ?? '',
         video: '',
-        title: LinkPreviewScrapper.getTitle(doc) ?? '',
+        title: results['mainTitle'] ?? results['secondTitle'] ?? results['lastTitle'] ?? '',
         type: LinkPreviewType.def,
       );
     } catch (e) {

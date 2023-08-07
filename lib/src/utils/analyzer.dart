@@ -16,11 +16,14 @@ class LinkPreviewAnalyzer {
 
     var info = getInfoFromCache(url);
     if (info != null) return info;
+
     try {
       info = await LinkPreview.scrapeFromURL(url);
 
-      info.timeout = DateTime.now().add(cacheDuration);
-      _map[url] = info;
+      if(cacheDuration > Duration.zero) {
+        info.timeout = DateTime.now().add(cacheDuration);
+        _map[url] = info;
+      }
     } catch (e) {
       print('Get web error: $url, Error: $e');
     }
