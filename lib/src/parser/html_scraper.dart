@@ -16,24 +16,24 @@ class HtmlScraper {
   }
 
   Map<String, String> parse(HtmlTokenizer tokenizer, MatcherGroups matcherGroups) {
-    StartTagToken? tag;
+    Stack<StartTagToken> tags = Stack();
     String content = '';
 
     while (tokenizer.moveNext()) {
       switch (tokenizer.current.kind) {
         case TokenKind.startTag:
-          tag = tokenizer.current as StartTagToken;
-          Map<String, String> results;
+          StartTagToken tag = tokenizer.current as StartTagToken;
+          Map<String, String>? results;
 
           // meta and link tags don't have to be closed. Treat as self closing
           // so we match on them now since there will be no end tag.
           if (tag.selfClosing || tag.name == 'meta' || tag.name == 'link') {
             results = match(tag, null, null, matcherGroups);
           } else {
-            results = parse(tokenizer, matcherGroups);
+            tags.push(tag);
           }
 
-          if (results.isNotEmpty) {
+          if (results != null && results.isNotEmpty) {
             return results;
           }
           break;
@@ -41,8 +41,13 @@ class HtmlScraper {
           content = (tokenizer.current as CharactersToken).data;
           break;
         case TokenKind.endTag:
-          var endTag = tokenizer.current as EndTagToken;
-          return match(tag, endTag, content, matcherGroups);
+          EndTagToken endTag = tokenizer.current as EndTagToken;
+          StartTagToken tag = tags.pop();
+          Map<String, String>? results = match(tag, endTag, content, matcherGroups);
+
+          if (results.isNotEmpty) {
+            return results;
+          }
       }
     }
 
@@ -57,4 +62,20 @@ class HtmlScraper {
 
     return {};
   }
+}
+
+class Stack<E> {
+  final _list = <E>[];
+
+  void push(E value) => _list.add(value);
+
+  E pop() => _list.removeLast();
+
+  E get peek => _list.last;
+
+  bool get isEmpty => _list.isEmpty;
+  bool get isNotEmpty => _list.isNotEmpty;
+
+  @override
+  String toString() => _list.toString();
 }
