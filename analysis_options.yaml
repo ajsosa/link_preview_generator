@@ -18,7 +18,7 @@ linter:
     close_sinks: true
     no_adjacent_strings_in_list: true
     no_default_cases: true
-    omit_local_variable_types: true
+    omit_local_variable_types: false
     only_throw_errors: true
     prefer_interpolation_to_compose_strings: true
     prefer_single_quotes: true

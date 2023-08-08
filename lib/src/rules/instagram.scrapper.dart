@@ -4,16 +4,16 @@ import 'package:link_preview_generator/src/models/types.dart';
 import 'package:link_preview_generator/src/utils/scrapper.dart';
 
 import '../parser/html_scraper.dart';
-import '../parser/matcher.dart';
-import '../parser/matcher_groups.dart';
+import '../parser/matching/matcher_group.dart';
+import '../parser/matching/matcher_groups.dart';
 
 class InstagramScrapper {
   static WebInfo scrape(HtmlScraper scraper, String data, String url) {
     try {
       final dynamic scrappedData = json.decode(data);
 
-      List<Matcher> domainMatchers = LinkPreviewScrapper.getDomainMatchers('domain');
-      List<Matcher> iconMatchers = LinkPreviewScrapper.getIconMatchers('icon');
+      MatcherGroup domainMatchers = LinkPreviewScrapper.getDomainMatchers('domain');
+      MatcherGroup iconMatchers = LinkPreviewScrapper.getIconMatchers('icon');
 
       Map<String, String> results = scraper.parseHtml(MatcherGroups([domainMatchers, iconMatchers]));
 

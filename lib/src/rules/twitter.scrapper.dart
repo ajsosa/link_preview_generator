@@ -1,29 +1,30 @@
 import 'dart:convert';
 
 import 'package:link_preview_generator/src/models/types.dart';
+import 'package:link_preview_generator/src/parser/matching/tag_attribute_matcher.dart';
 import 'package:link_preview_generator/src/utils/scrapper.dart';
 import 'package:universal_html/html.dart';
 
 import '../parser/html_scraper.dart';
-import '../parser/matcher.dart';
-import '../parser/matcher_groups.dart';
+import '../parser/matching/matcher_group.dart';
+import '../parser/matching/matcher_groups.dart';
 
 class TwitterScrapper {
   static WebInfo scrape(HtmlScraper scraper, String data, String url) {
 
-    List<Matcher> domainMatchers = LinkPreviewScrapper.getDomainMatchers('domain');
-    List<Matcher> iconMatchers = LinkPreviewScrapper.getIconMatchers('icon');
-    List<Matcher> baseUrlMatchers = LinkPreviewScrapper.getBaseUrlMatchers('base');
+    MatcherGroup domainMatchers = LinkPreviewScrapper.getDomainMatchers('domain');
+    MatcherGroup iconMatchers = LinkPreviewScrapper.getIconMatchers('icon');
+    MatcherGroup baseUrlMatchers = LinkPreviewScrapper.getBaseUrlMatchers('base');
 
-    List<Matcher> imageMatchers = [
-      Matcher(key: 'image', tag: 'meta', matchAttrName: 'property', matchAttrValue: 'og:image', attrName: 'content'),
-      Matcher(key: 'image', tag: 'meta', matchAttrName: 'property', matchAttrValue: 'og:image:user_generated', attrName: 'content'),
-    ];
+    MatcherGroup imageMatchers = MatcherGroup([
+      TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'property', attrValueToMatch: 'og:image', attrToReturn: 'content'),
+      TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'property', attrValueToMatch: 'og:image:user_generated', attrToReturn: 'content'),
+    ], key: 'image');
 
-    List<Matcher> videoMatchers = [
-      Matcher(key: 'video', tag: 'meta', matchAttrName: 'property', matchAttrValue: 'og:video:url', attrName: 'content'),
-      Matcher(key: 'video', tag: 'meta', matchAttrName: 'property', matchAttrValue: 'og:video:secure_url', attrName: 'content'),
-    ];
+    MatcherGroup videoMatchers = MatcherGroup([
+      TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'property', attrValueToMatch: 'og:video:url', attrToReturn: 'content'),
+      TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'property', attrValueToMatch: 'og:video:secure_url', attrToReturn: 'content'),
+    ], key: 'video');
 
     Map<String, String> results = scraper.parseHtml(MatcherGroups([domainMatchers, iconMatchers, baseUrlMatchers, imageMatchers, videoMatchers]));
 

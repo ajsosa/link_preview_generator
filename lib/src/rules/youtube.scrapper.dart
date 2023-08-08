@@ -1,9 +1,11 @@
 import 'package:link_preview_generator/src/models/types.dart';
+import 'package:link_preview_generator/src/parser/matching/tag_attribute_matcher.dart';
+import 'package:link_preview_generator/src/parser/matching/tag_matcher.dart';
 import 'package:link_preview_generator/src/utils/scrapper.dart';
 
 import '../parser/html_scraper.dart';
-import '../parser/matcher.dart';
-import '../parser/matcher_groups.dart';
+import '../parser/matching/matcher_group.dart';
+import '../parser/matching/matcher_groups.dart';
 
 class YouTubeScrapper {
   static String? getYouTubeVideoId(String url) {
@@ -16,20 +18,20 @@ class YouTubeScrapper {
   }
 
   static WebInfo scrape(HtmlScraper scraper, String url) {
-    List<Matcher> domainMatchers = LinkPreviewScrapper.getDomainMatchers('domain');
-    List<Matcher> iconMatchers = LinkPreviewScrapper.getIconMatchers('icon');
+    MatcherGroup domainMatchers = LinkPreviewScrapper.getDomainMatchers('domain');
+    MatcherGroup iconMatchers = LinkPreviewScrapper.getIconMatchers('icon');
 
-    List<Matcher> descriptionMatchers = [
-      Matcher(key: 'description', tag: 'meta', matchAttrName: 'name', matchAttrValue: 'description', attrName: 'content'),
-      Matcher(key: 'description', tag: 'meta', matchAttrName: 'name', matchAttrValue: 'twitter:description', attrName: 'content'),
-    ];
+    MatcherGroup descriptionMatchers = MatcherGroup([
+      TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'name', attrValueToMatch: 'description', attrToReturn: 'content'),
+      TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'name', attrValueToMatch: 'twitter:description', attrToReturn: 'content'),
+    ], key: 'description');
 
     RegExp titleReg = RegExp('"title":"(.+?)"');
 
-    List<Matcher> titleMatchers = [
-      Matcher(key: 'title', tag: 'title', matchTagOnly: true, getTagContent: true),
-      Matcher(key: 'title', tag: 'script', contentRegex: titleReg, matchTagOnly: true, getTagContent: true)
-    ];
+    MatcherGroup titleMatchers = MatcherGroup([
+      TagMatcher(tagToMatch: 'title'),
+      TagMatcher(tagToMatch: 'script', contentRegex: titleReg)
+    ], key: 'title');
 
     Map<String, String> results = scraper.parseHtml(MatcherGroups([domainMatchers, iconMatchers, descriptionMatchers, titleMatchers]));
 

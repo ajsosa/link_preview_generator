@@ -4,7 +4,8 @@ import 'package:collection/collection.dart';
 import 'package:http/http.dart' as http;
 import 'package:link_preview_generator/src/models/types.dart';
 import 'package:link_preview_generator/src/parser/html_scraper.dart';
-import 'package:link_preview_generator/src/parser/matcher.dart';
+import 'package:link_preview_generator/src/parser/matching/tag_attribute_matcher.dart';
+import 'package:link_preview_generator/src/parser/matching/tag_matcher.dart';
 import 'package:link_preview_generator/src/rules/amazon.scrapper.dart';
 import 'package:link_preview_generator/src/rules/default.scrapper.dart';
 import 'package:link_preview_generator/src/rules/image.scrapper.dart';
@@ -16,6 +17,7 @@ import 'package:link_preview_generator/src/utils/analyzer.dart';
 import 'package:link_preview_generator/src/utils/canonical_url.dart';
 import 'package:universal_html/html.dart';
 
+import '../parser/matching/matcher_group.dart';
 import '../rules/audio.scrapper.dart';
 
 /// Generate data required for a link preview.
@@ -108,28 +110,26 @@ class LinkPreviewScrapper {
 
   static String getBaseUrl(String? scrapedUrl, String url) => scrapedUrl ?? Uri.parse(url).origin;
 
-  static List<Matcher> getBaseUrlMatchers(String key) {
-    return [
-      Matcher(key: key, tag: 'base', attrName: 'href', matchTagOnly: true),
-    ];
+  static MatcherGroup getBaseUrlMatchers(String key) {
+    return MatcherGroup([
+      TagMatcher(tagToMatch: 'base', attrToReturn: 'href'),
+    ], key: key);
   }
 
   static String? getDomain(String? domainName, String url) {
     try {
-      return domainName != null
-          ? Uri.parse(domainName).host.replaceFirst('www.', '')
-          : Uri.parse(url).host.replaceFirst('www.', '');
+      return domainName != null ? Uri.parse(domainName).host.replaceFirst('www.', '') : Uri.parse(url).host.replaceFirst('www.', '');
     } catch (e) {
       print('Domain resolution failure Error:$e');
       return null;
     }
   }
 
-  static List<Matcher> getDomainMatchers(String key) {
-    return [
-      Matcher(key: key, tag: 'link', matchAttrName: 'rel', matchAttrValue: 'canonical', attrName: 'href'),
-      Matcher(key: key, tag: 'meta', matchAttrName: 'property', matchAttrValue: 'og:url', getTagContent: true),
-    ];
+  static MatcherGroup getDomainMatchers(String key) {
+    return MatcherGroup([
+      TagAttributeMatcher(tagToMatch: 'link', attrToMatch: 'rel', attrValueToMatch: 'canonical', attrToReturn: 'href'),
+      TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'property', attrValueToMatch: 'og:url'),
+    ], key: key);
   }
 
   static String? getIcon(String? metaIcon, String url) {
@@ -139,31 +139,29 @@ class LinkPreviewScrapper {
     return '${Uri.parse(url).origin}/favicon.ico';
   }
 
-  static List<Matcher> getIconMatchers(String key) {
-    return [
-      Matcher(key: key, tag: 'link', matchAttrName: 'rel', matchAttrValue: 'icon', attrName: 'href'),
-      Matcher(key: key, tag: 'link', matchAttrName: 'rel', matchAttrValue: 'shortcut icon', attrName: 'href'),
-    ];
+  static MatcherGroup getIconMatchers(String key) {
+    return MatcherGroup([
+      TagAttributeMatcher(tagToMatch: 'link', attrToMatch: 'rel', attrValueToMatch: 'icon', attrToReturn: 'href'),
+      TagAttributeMatcher(tagToMatch: 'link', attrToMatch: 'rel', attrValueToMatch: 'shortcut icon', attrToReturn: 'href'),
+    ], key: key);
   }
 
-  static List<Matcher> getPrimaryTitleMatchers(String key) {
-    return [
-      Matcher(key: key, tag: 'meta', matchAttrName: 'property', matchAttrValue: 'og:title', attrName: 'content'),
-      Matcher(key: key, tag: 'meta', matchAttrName: 'name', matchAttrValue: 'twitter:title', attrName: 'content'),
-    ];
+  static MatcherGroup getPrimaryTitleMatchers(String key) {
+    return MatcherGroup([
+      TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'property', attrValueToMatch: 'og:title', attrToReturn: 'content'),
+      TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'name', attrValueToMatch: 'twitter:title', attrToReturn: 'content'),
+    ], key: key);
   }
 
-  static List<Matcher> getSecondaryTitleMatchers(String key) {
-    return [
-      Matcher(key: key, tag: 'title', matchTagOnly: true, getTagContent: true),
-    ];
+  static MatcherGroup getSecondaryTitleMatchers(String key) {
+    return MatcherGroup([TagMatcher(tagToMatch: 'title')], key: key);
   }
 
-  static List<Matcher> getLastResortTitleMatchers(String key) {
-    return [
-      Matcher(key: key, tag: 'h1', matchTagOnly: true, getTagContent: true),
-      Matcher(key: key, tag: 'h2', matchTagOnly: true, getTagContent: true),
-    ];
+  static MatcherGroup getLastResortTitleMatchers(String key) {
+    return MatcherGroup([
+      TagMatcher(tagToMatch: 'h1'),
+      TagMatcher(tagToMatch: 'h2'),
+    ], key: key);
   }
 
   static String? handleUrl(String url, String? source) {

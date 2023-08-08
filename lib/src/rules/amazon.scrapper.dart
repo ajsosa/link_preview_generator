@@ -1,27 +1,28 @@
 import 'package:link_preview_generator/src/models/types.dart';
+import 'package:link_preview_generator/src/parser/matching/tag_attribute_matcher.dart';
 import 'package:link_preview_generator/src/utils/scrapper.dart';
 
 import '../parser/html_scraper.dart';
-import '../parser/matcher.dart';
-import '../parser/matcher_groups.dart';
+import '../parser/matching/matcher_group.dart';
+import '../parser/matching/matcher_groups.dart';
 
 class AmazonScrapper {
   static WebInfo scrape(HtmlScraper scraper, String url) {
-    List<Matcher> domainMatchers = LinkPreviewScrapper.getDomainMatchers('domain');
-    List<Matcher> iconMatchers = LinkPreviewScrapper.getIconMatchers('icon');
-    List<Matcher> baseUrlMatchers = LinkPreviewScrapper.getBaseUrlMatchers('base');
-    List<Matcher> mainTitleMatchers = LinkPreviewScrapper.getPrimaryTitleMatchers('mainTitle');
-    List<Matcher> secondTitleMatchers = LinkPreviewScrapper.getSecondaryTitleMatchers('secondTitle');
-    List<Matcher> lastTitleMatchers = LinkPreviewScrapper.getLastResortTitleMatchers('lastTitle');
+    MatcherGroup domainMatchers = LinkPreviewScrapper.getDomainMatchers('domain');
+    MatcherGroup iconMatchers = LinkPreviewScrapper.getIconMatchers('icon');
+    MatcherGroup baseUrlMatchers = LinkPreviewScrapper.getBaseUrlMatchers('base');
+    MatcherGroup mainTitleMatchers = LinkPreviewScrapper.getPrimaryTitleMatchers('mainTitle');
+    MatcherGroup secondTitleMatchers = LinkPreviewScrapper.getSecondaryTitleMatchers('secondTitle');
+    MatcherGroup lastTitleMatchers = LinkPreviewScrapper.getLastResortTitleMatchers('lastTitle');
 
-    List<Matcher> imageMatchers = [
-      Matcher(key: 'image', tag: '*', matchAttrName: 'class*', matchAttrValue: 'a-dynamic-image', attrName: 'data-old-hires'),
-      Matcher(key: 'image', tag: '*', matchAttrName: 'class*', matchAttrValue: 'a-dynamic-image', attrName: 'src')
-    ];
+    MatcherGroup imageMatchers = MatcherGroup([
+      TagAttributeMatcher(tagToMatch: '*', attrToMatch: 'class*', attrValueToMatch: 'a-dynamic-image', attrToReturn: 'data-old-hires'),
+      TagAttributeMatcher(tagToMatch: '*', attrToMatch: 'class*', attrValueToMatch: 'a-dynamic-image', attrToReturn: 'src')
+    ], key: 'image');
 
-    List<Matcher> descriptionMatchers = [
-      Matcher(key: 'description', tag: 'meta', matchAttrName: 'name', matchAttrValue: 'description', attrName: 'content'),
-    ];
+    MatcherGroup descriptionMatchers = MatcherGroup([
+      TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'name', attrValueToMatch: 'description', attrToReturn: 'content'),
+    ], key: 'description');
 
     Map<String, String> results = scraper.parseHtml(MatcherGroups([
       domainMatchers,

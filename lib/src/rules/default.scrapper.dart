@@ -1,59 +1,51 @@
 import 'package:link_preview_generator/src/models/types.dart';
+import 'package:link_preview_generator/src/parser/matching/tag_attribute_matcher.dart';
 import 'package:link_preview_generator/src/utils/scrapper.dart';
 import 'package:universal_html/html.dart';
 
 import '../parser/html_scraper.dart';
-import '../parser/matcher.dart';
-import '../parser/matcher_groups.dart';
+import '../parser/matching/matcher_group.dart';
+import '../parser/matching/matcher_groups.dart';
 
 class DefaultScrapper {
   static WebInfo scrape(HtmlScraper scraper, String url) {
+    MatcherGroup domainMatchers = LinkPreviewScrapper.getDomainMatchers('domain');
+    MatcherGroup iconDefaultMatchers = LinkPreviewScrapper.getIconMatchers('iconDefault');
+    MatcherGroup baseUrlMatchers = LinkPreviewScrapper.getBaseUrlMatchers('base');
 
-    List<Matcher> domainMatchers = LinkPreviewScrapper.getDomainMatchers('domain');
-    List<Matcher> iconDefaultMatchers = LinkPreviewScrapper.getIconMatchers('iconDefault');
-    List<Matcher> baseUrlMatchers = LinkPreviewScrapper.getBaseUrlMatchers('base');
+    MatcherGroup mainTitleMatchers = LinkPreviewScrapper.getPrimaryTitleMatchers('mainTitle');
+    MatcherGroup secondTitleMatchers = LinkPreviewScrapper.getSecondaryTitleMatchers('secondTitle');
+    MatcherGroup lastTitleMatchers = LinkPreviewScrapper.getLastResortTitleMatchers('lastTitle');
 
-    List<Matcher> mainTitleMatchers = LinkPreviewScrapper.getPrimaryTitleMatchers('mainTitle');
-    List<Matcher> secondTitleMatchers = LinkPreviewScrapper.getSecondaryTitleMatchers('secondTitle');
-    List<Matcher> lastTitleMatchers = LinkPreviewScrapper.getLastResortTitleMatchers('lastTitle');
+    MatcherGroup imageMatchers = MatcherGroup([
+      TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'property', attrValueToMatch: 'og:logo', attrToReturn: 'content'),
+      TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'itemprop', attrValueToMatch: 'logo', attrToReturn: 'content'),
+      TagAttributeMatcher(tagToMatch: 'img', attrToMatch: 'itemprop', attrValueToMatch: 'logo', attrToReturn: 'src'),
+      TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'property', attrValueToMatch: 'og:image', attrToReturn: 'content'),
+      TagAttributeMatcher(tagToMatch: 'img', attrToMatch: 'class*', attrValueToMatch: 'logo', attrToReturn: 'content', caseInsensitiveMatch: true),
+      TagAttributeMatcher(tagToMatch: 'img', attrToMatch: 'src*', attrValueToMatch: 'logo', attrToReturn: 'content', caseInsensitiveMatch: true),
+      TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'property', attrValueToMatch: 'og:image:secure_url', attrToReturn: 'content'),
+      TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'property', attrValueToMatch: 'og:image:url', attrToReturn: 'content'),
+      TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'property', attrValueToMatch: 'og:image', attrToReturn: 'content'),
+      TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'name', attrValueToMatch: 'twitter:image:src', attrToReturn: 'content'),
+      TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'name', attrValueToMatch: 'twitter:image', attrToReturn: 'content'),
+      TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'itemprop', attrValueToMatch: 'image', attrToReturn: 'content'),
+    ], key: 'image');
 
-    List<Matcher> imageMatchers = [
-      Matcher(key: 'image', tag: 'meta', matchAttrName: 'property', matchAttrValue: 'og:logo', attrName: 'content'),
-      Matcher(key: 'image', tag: 'meta', matchAttrName: 'itemprop', matchAttrValue: 'logo', attrName: 'content'),
-      Matcher(key: 'image', tag: 'img', matchAttrName: 'itemprop', matchAttrValue: 'logo', attrName: 'src'),
-      Matcher(key: 'image', tag: 'meta', matchAttrName: 'property', matchAttrValue: 'og:image', attrName: 'content'),
-      Matcher(key: 'image', tag: 'img', matchAttrName: 'class*', matchAttrValue: 'logo', attrName: 'content', caseInsensitive: true),
-      Matcher(key: 'image', tag: 'img', matchAttrName: 'src*', matchAttrValue: 'logo', attrName: 'content', caseInsensitive: true),
-      Matcher(key: 'image', tag: 'meta', matchAttrName: 'property', matchAttrValue: 'og:image:secure_url', attrName: 'content'),
-      Matcher(key: 'image', tag: 'meta', matchAttrName: 'property', matchAttrValue: 'og:image:url', attrName: 'content'),
-      Matcher(key: 'image', tag: 'meta', matchAttrName: 'property', matchAttrValue: 'og:image', attrName: 'content'),
-      Matcher(key: 'image', tag: 'meta', matchAttrName: 'name', matchAttrValue: 'twitter:image:src', attrName: 'content'),
-      Matcher(key: 'image', tag: 'meta', matchAttrName: 'name', matchAttrValue: 'twitter:image', attrName: 'content'),
-      Matcher(key: 'image', tag: 'meta', matchAttrName: 'itemprop', matchAttrValue: 'image', attrName: 'content'),
-    ];
-
-    List<Matcher> iconMatchers = [
-      Matcher(key: 'icon', tag: 'meta', matchAttrName: 'property', matchAttrValue: 'og:logo', attrName: 'content'),
-      Matcher(key: 'icon', tag: 'meta', matchAttrName: 'itemprop', matchAttrValue: 'logo', attrName: 'content'),
-      Matcher(key: 'icon', tag: 'img', matchAttrName: 'itemprop', matchAttrValue: 'logo', attrName: 'src'),
-    ];
+    MatcherGroup iconMatchers = MatcherGroup([
+      TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'property', attrValueToMatch: 'og:logo', attrToReturn: 'content'),
+      TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'itemprop', attrValueToMatch: 'logo', attrToReturn: 'content'),
+      TagAttributeMatcher(tagToMatch: 'img',  attrToMatch: 'itemprop', attrValueToMatch: 'logo', attrToReturn: 'src'),
+    ], key: 'icon');
 
     // Purposely left out the <p> matcher that was implemented in the original. Can always add later if we need it.
-    List<Matcher> descriptionMatchers = [
-      Matcher(key: 'description', tag: 'meta', matchAttrName: 'name', matchAttrValue: 'description', attrName: 'content'),
-      Matcher(key: 'description', tag: 'meta', matchAttrName: 'name', matchAttrValue: 'twitter:description', attrName: 'content'),
-    ];
+    MatcherGroup descriptionMatchers = MatcherGroup([
+      TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'name', attrValueToMatch: 'description', attrToReturn: 'content'),
+      TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'name', attrValueToMatch: 'twitter:description', attrToReturn: 'content'),
+    ], key: 'description');
 
-    Map<String, String> results = scraper.parseHtml(MatcherGroups([
-      baseUrlMatchers,
-      imageMatchers,
-      iconMatchers,
-      descriptionMatchers,
-      domainMatchers,
-      iconDefaultMatchers,
-      mainTitleMatchers,
-      secondTitleMatchers,
-      lastTitleMatchers]));
+    Map<String, String> results = scraper
+        .parseHtml(MatcherGroups([baseUrlMatchers, imageMatchers, iconMatchers, descriptionMatchers, domainMatchers, iconDefaultMatchers, mainTitleMatchers, secondTitleMatchers, lastTitleMatchers]));
 
     try {
       var baseUrl = LinkPreviewScrapper.getBaseUrl(results['base'], url);
@@ -65,7 +57,8 @@ class DefaultScrapper {
         domain: LinkPreviewScrapper.getDomain(results['domain'], url) ?? url,
         icon: LinkPreviewScrapper.getIcon(results['iconDefault'], url) ?? icon ?? '',
         // TODO: Implement the last resort image scraping
-        image: image ?? '',//_getDocImage(doc, url) ?? '',
+        image: image ?? '',
+        //_getDocImage(doc, url) ?? '',
         video: '',
         title: results['mainTitle'] ?? results['secondTitle'] ?? results['lastTitle'] ?? '',
         type: LinkPreviewType.def,
@@ -87,22 +80,15 @@ class DefaultScrapper {
   static String? _getDescription(HtmlDocument doc) {
     try {
       final ogDescription = doc.querySelector('meta[name=description]');
-      if (ogDescription != null &&
-          ogDescription.attributes['content'] != null &&
-          ogDescription.attributes['content']!.isNotEmpty) {
+      if (ogDescription != null && ogDescription.attributes['content'] != null && ogDescription.attributes['content']!.isNotEmpty) {
         return ogDescription.attributes['content'];
       }
-      final twitterDescription =
-          doc.querySelector('meta[name="twitter:description"]');
-      if (twitterDescription != null &&
-          twitterDescription.attributes['content'] != null &&
-          twitterDescription.attributes['content']!.isNotEmpty) {
+      final twitterDescription = doc.querySelector('meta[name="twitter:description"]');
+      if (twitterDescription != null && twitterDescription.attributes['content'] != null && twitterDescription.attributes['content']!.isNotEmpty) {
         return twitterDescription.attributes['content'];
       }
       final metaDescription = doc.querySelector('meta[name="description"]');
-      if (metaDescription != null &&
-          metaDescription.attributes['content'] != null &&
-          metaDescription.attributes['content']!.isNotEmpty) {
+      if (metaDescription != null && metaDescription.attributes['content'] != null && metaDescription.attributes['content']!.isNotEmpty) {
         return metaDescription.attributes['content'];
       }
       final paragraphs = doc.querySelectorAll('p');
