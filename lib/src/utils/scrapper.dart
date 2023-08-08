@@ -128,7 +128,7 @@ class LinkPreviewScrapper {
   static MatcherGroup getDomainMatchers(String key) {
     return MatcherGroup([
       TagAttributeMatcher(tagToMatch: 'link', attrToMatch: 'rel', attrValueToMatch: 'canonical', attrToReturn: 'href'),
-      TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'property', attrValueToMatch: 'og:url'),
+      TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'property', attrValueToMatch: 'og:url', attrToReturn: 'content'),
     ], key: key);
   }
 

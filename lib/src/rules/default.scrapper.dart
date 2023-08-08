@@ -2,7 +2,6 @@ import 'package:link_preview_generator/src/models/types.dart';
 import 'package:link_preview_generator/src/parser/matching/tag_attribute_matcher.dart';
 import 'package:link_preview_generator/src/parser/matching/tag_matcher.dart';
 import 'package:link_preview_generator/src/utils/scrapper.dart';
-import 'package:universal_html/html.dart';
 
 import '../parser/html_scraper.dart';
 import '../parser/matching/matcher_group.dart';
