@@ -16,8 +16,8 @@ class AmazonScrapper {
     MatcherGroup lastTitleMatchers = LinkPreviewScrapper.getLastResortTitleMatchers('lastTitle');
 
     MatcherGroup imageMatchers = MatcherGroup([
-      TagAttributeMatcher(tagToMatch: '*', attrToMatch: 'class*', attrValueToMatch: 'a-dynamic-image', attrToReturn: 'data-old-hires'),
-      TagAttributeMatcher(tagToMatch: '*', attrToMatch: 'class*', attrValueToMatch: 'a-dynamic-image', attrToReturn: 'src')
+      TagAttributeMatcher(tagToMatch: '*', attrToMatch: 'class', attrValueToMatch: 'a-dynamic-image', attrToReturn: 'data-old-hires'),
+      TagAttributeMatcher(tagToMatch: '*', attrToMatch: 'class', attrValueToMatch: 'a-dynamic-image', attrToReturn: 'src')
     ], key: 'image');
 
     MatcherGroup descriptionMatchers = MatcherGroup([
