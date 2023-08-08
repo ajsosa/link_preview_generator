@@ -23,8 +23,8 @@ class DefaultScrapper {
       TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'itemprop', attrValueToMatch: 'logo', attrToReturn: 'content'),
       TagAttributeMatcher(tagToMatch: 'img', attrToMatch: 'itemprop', attrValueToMatch: 'logo', attrToReturn: 'src'),
       TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'property', attrValueToMatch: 'og:image', attrToReturn: 'content'),
-      TagAttributeMatcher(tagToMatch: 'img', attrToMatch: 'class', attrValueToMatch: 'logo', attrToReturn: 'content', caseInsensitiveMatch: true),
-      TagAttributeMatcher(tagToMatch: 'img', attrToMatch: 'src', attrValueToMatch: 'logo', attrToReturn: 'content', caseInsensitiveMatch: true),
+      TagAttributeMatcher(tagToMatch: 'img', attrToMatch: 'class', attrValueToMatch: 'logo', attrToReturn: 'src', caseInsensitiveMatch: true, wildCardAttrMatch: true),
+      TagAttributeMatcher(tagToMatch: 'img', attrToMatch: 'src', attrValueToMatch: 'logo', attrToReturn: 'src', caseInsensitiveMatch: true, wildCardAttrMatch: true),
       TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'property', attrValueToMatch: 'og:image:secure_url', attrToReturn: 'content'),
       TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'property', attrValueToMatch: 'og:image:url', attrToReturn: 'content'),
       TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'name', attrValueToMatch: 'twitter:image:src', attrToReturn: 'content'),
@@ -58,7 +58,8 @@ class DefaultScrapper {
           iconDefaultMatchers,
           mainTitleMatchers,
           secondTitleMatchers,
-          lastTitleMatchers
+          lastTitleMatchers,
+          lastResortImageMatchers,
         ])
     );
 
