@@ -16,13 +16,13 @@ class TagAttributeMatcher implements Matcher {
 
   TagAttributeMatcher(
       {required this.tagToMatch,
-        required this.attrToMatch,
-        required this.attrValueToMatch,
-        this.attrToReturn,
-        this.giveUpAfterTag,
-        this.excludeExt,
-        this.caseInsensitiveMatch = false,
-        this.wildCardAttrMatch = false}) {
+      required this.attrToMatch,
+      required this.attrValueToMatch,
+      this.attrToReturn,
+      this.giveUpAfterTag,
+      this.excludeExt,
+      this.caseInsensitiveMatch = false,
+      this.wildCardAttrMatch = false}) {
     if (tagToMatch.contains('*')) {
       isTagWildCard = true;
     }
@@ -53,41 +53,44 @@ class TagAttributeMatcher implements Matcher {
       giveUp = true;
     }
 
-    if (tag == null ||
-        (!isTagWildCard && tagToMatch != tag.name!) ||
-        isMatched()) {
+    if (tag == null || (!isTagWildCard && tagToMatch != tag.name!) || isMatched()) {
       return false;
     }
 
-    TagAttribute? matchAttr;
-    TagAttribute? returnAttr;
+    bool matchedAttr = false;
+    String? returnAttr;
 
-    for (TagAttribute tagAttr in tag.attributeSpans ?? []) {
-      if (tagAttr.name == attrToMatch) {
-        String tagAttrValue = tagAttr.value;
+    for (MapEntry<Object, String> attrPair in tag.data.entries) {
+      if (attrPair.key is! String) {
+        continue;
+      }
+
+      String attrName = attrPair.key as String;
+      String attrValue = attrPair.value;
+
+      if (attrName == attrToMatch) {
+        String tagAttrValue = attrValue;
         if (caseInsensitiveMatch) {
-          tagAttrValue = tagAttr.value.toLowerCase();
+          tagAttrValue = attrValue.toLowerCase();
         }
 
-        bool isValueMatch = wildCardAttrMatch
-            ? tagAttrValue.contains(attrValueToMatch)
-            : tagAttrValue == attrValueToMatch;
+        bool isValueMatch = wildCardAttrMatch ? tagAttrValue.contains(attrValueToMatch) : tagAttrValue == attrValueToMatch;
 
         if (isValueMatch) {
-          matchAttr = tagAttr;
+          matchedAttr = true;
         }
       }
 
-      if (tagAttr.name == attrToReturn) {
-        returnAttr = tagAttr;
+      if (attrName == attrToReturn) {
+        returnAttr = attrValue;
       }
 
-      if (matchAttr != null && (returnAttr != null || attrToReturn == null)) {
+      if (matchedAttr && (returnAttr != null || attrToReturn == null)) {
         break;
       }
     }
 
-    if (matchAttr == null) {
+    if (!matchedAttr) {
       return false;
     }
 
@@ -100,7 +103,7 @@ class TagAttributeMatcher implements Matcher {
       return false;
     }
 
-    _result = _isResultValid(returnAttr.value) ? returnAttr.value : '';
+    _result = _isResultValid(returnAttr) ? returnAttr : '';
 
     return _result.isNotEmpty;
   }

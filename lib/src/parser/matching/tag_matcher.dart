@@ -11,12 +11,7 @@ class TagMatcher implements Matcher {
   bool giveUp = false;
   final RegExp? contentRegex;
 
-  TagMatcher(
-      {required this.tagToMatch,
-        this.contentRegex,
-        this.attrToReturn,
-        this.giveUpAfterTag,
-        this.excludeExt}) {
+  TagMatcher({required this.tagToMatch, this.contentRegex, this.attrToReturn, this.giveUpAfterTag, this.excludeExt}) {
     if (tagToMatch.contains('*')) {
       isWildCard = true;
     }
@@ -43,16 +38,21 @@ class TagMatcher implements Matcher {
       giveUp = true;
     }
 
-    if (tag == null ||
-        (!isWildCard && tagToMatch != tag.name!) ||
-        isMatched()) {
+    if (tag == null || (!isWildCard && tagToMatch != tag.name!) || isMatched()) {
       return false;
     }
 
     if (attrToReturn != null) {
-      for (TagAttribute tagAttr in tag.attributeSpans ?? []) {
-        if (tagAttr.name == attrToReturn) {
-          _result = _isResultValid(tagAttr.value) ? tagAttr.value : '';
+      for (MapEntry<Object, String> attrPair in tag.data.entries) {
+        if (attrPair.key is! String) {
+          continue;
+        }
+
+        String attrName = attrPair.key as String;
+        String attrValue = attrPair.value;
+
+        if (attrName == attrToReturn) {
+          _result = _isResultValid(attrValue) ? attrValue : '';
           return _result.isNotEmpty;
         }
       }
@@ -65,8 +65,7 @@ class TagMatcher implements Matcher {
       return _result.isNotEmpty;
     }
 
-    String? regexResult =
-    contentRegex!.firstMatch(content!)?.group(0)?.split(':')[1].trim();
+    String? regexResult = contentRegex!.firstMatch(content!)?.group(0)?.split(':')[1].trim();
 
     if (regexResult != null) {
       _result = _isResultValid(regexResult) ? regexResult : '';

@@ -9,7 +9,7 @@ class HtmlScraper {
   HtmlScraper(this._htmlString);
 
   Map<String, String> scrapeHtml(MatcherGroups matcherGroups) {
-    HtmlTokenizer tokenizer = HtmlTokenizer(_htmlString, attributeSpans: true);
+    HtmlTokenizer tokenizer = HtmlTokenizer(_htmlString);
 
     Map<String, String> results = parse(tokenizer, matcherGroups);
     return results.isNotEmpty ? results : matcherGroups.getResults();
