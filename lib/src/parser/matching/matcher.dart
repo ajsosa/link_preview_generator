@@ -1,10 +1,11 @@
 import '../token.dart';
-import '../tokenizer.dart';
 
 abstract class Matcher {
-  bool match(HtmlTokenizer tokenizer, StartTagToken tag);
+  bool match(StartTagToken? tag, EndTagToken? endTag, String? content);
 
   bool isMatched();
+
+  bool stopMatching();
 
   String getResult();
 }

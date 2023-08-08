@@ -6,12 +6,17 @@ import '../parser/matching/matcher_group.dart';
 import '../parser/matching/matcher_groups.dart';
 
 class ImageScrapper {
-  static WebInfo scrape(HtmlScraper scraper, String url) {
-
+  static WebInfo scrape(HtmlScraper scraper, String url, {bool showDomain = false}) {
     MatcherGroup domainMatchers = LinkPreviewScrapper.getDomainMatchers('domain');
     MatcherGroup iconMatchers = LinkPreviewScrapper.getIconMatchers('icon');
 
-    Map<String, String> results = scraper.parseHtml(MatcherGroups([domainMatchers, iconMatchers]));
+    MatcherGroups groups = MatcherGroups([iconMatchers]);
+
+    if (showDomain) {
+      groups.add(domainMatchers);
+    }
+
+    Map<String, String> results = scraper.scrapeHtml(groups);
 
     try {
       return WebInfo(

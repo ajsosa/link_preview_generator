@@ -9,6 +9,9 @@ class LinkPreviewAnalyzer {
   /// return [InfoBase]
   static Future<InfoBase?> getInfo(
     String url, {
+    bool showBody = false,
+    bool showDomain = false,
+    bool showTitle = false,
     Duration cacheDuration = const Duration(hours: 24),
     bool multimedia = true,
   }) async {
@@ -18,9 +21,9 @@ class LinkPreviewAnalyzer {
     if (info != null) return info;
 
     try {
-      info = await LinkPreview.scrapeFromURL(url);
+      info = await LinkPreview.scrapeFromURL(url, showBody: showBody, showDomain: showDomain, showTitle: showTitle);
 
-      if(cacheDuration > Duration.zero) {
+      if (cacheDuration > Duration.zero) {
         info.timeout = DateTime.now().add(cacheDuration);
         _map[url] = info;
       }
@@ -45,6 +48,5 @@ class LinkPreviewAnalyzer {
   }
 
   /// Is it an empty string
-  static bool isNotEmpty(String? str) =>
-      str != null && str.isNotEmpty && str.trim().isNotEmpty;
+  static bool isNotEmpty(String? str) => str != null && str.isNotEmpty && str.trim().isNotEmpty;
 }

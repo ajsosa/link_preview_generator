@@ -1,5 +1,4 @@
 import '../token.dart';
-import '../tokenizer.dart';
 import 'matcher_group.dart';
 
 class MatcherGroups {
@@ -8,13 +7,17 @@ class MatcherGroups {
 
   MatcherGroups(this._groups);
 
-  void match(HtmlTokenizer tokenizer, StartTagToken tag) {
+  void add(MatcherGroup group) {
+    _groups.add(group);
+  }
+
+  void match(StartTagToken? tag, EndTagToken? endTag, String? content) {
     for (MatcherGroup group in _groups) {
       if (group.isDone()) {
         continue;
       }
 
-      group.match(tokenizer, tag);
+      group.match(tag, endTag, content);
     }
   }
 
@@ -36,7 +39,9 @@ class MatcherGroups {
         continue;
       }
 
-      results[group.key] = group.result;
+      if (group.result.isNotEmpty) {
+        results[group.key] = group.result;
+      }
     }
 
     return results;

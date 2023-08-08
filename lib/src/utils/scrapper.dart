@@ -29,7 +29,7 @@ class LinkPreview {
 
   /// Scraps the link from the given `url` to get the data for the preview.
   /// Returns the data in the form [WebInfo]
-  static Future<WebInfo> scrapeFromURL(String url) async {
+  static Future<WebInfo> scrapeFromURL(String url, {bool showBody = false, bool showDomain = false, bool showTitle = false}) async {
     try {
       final response = await http.get(
         Uri.parse(url),
@@ -43,27 +43,27 @@ class LinkPreview {
       HtmlScraper scraper = HtmlScraper(data);
 
       if (LinkPreviewScrapper.isMimeVideo(mimeType)) {
-        return VideoScrapper.scrape(scraper, url);
+        return VideoScrapper.scrape(scraper, url, showDomain: showDomain);
       } else if (LinkPreviewScrapper.isMimeAudio(mimeType)) {
-        return AudioScrapper.scrape(scraper, url);
+        return AudioScrapper.scrape(scraper, url, showDomain: showDomain);
       } else if (LinkPreviewScrapper.isMimeImage(mimeType)) {
-        return ImageScrapper.scrape(scraper, url);
+        return ImageScrapper.scrape(scraper, url, showDomain: showDomain);
       } else if (LinkPreviewScrapper.isUrlInsta(url)) {
         final instagramResponse = await http.get(
           Uri.parse('$url?__a=1&max_id=endcursor'),
         );
-        return InstagramScrapper.scrape(scraper, instagramResponse.body, url);
+        return InstagramScrapper.scrape(scraper, instagramResponse.body, url, showDomain: showDomain);
       } else if (LinkPreviewScrapper.isUrlYoutube(url)) {
-        return YouTubeScrapper.scrape(scraper, url);
+        return YouTubeScrapper.scrape(scraper, url, showDomain: showDomain, showBody: showBody, showTitle: showTitle);
       } else if (LinkPreviewScrapper.isUrlAmazon(url)) {
-        return AmazonScrapper.scrape(scraper, url);
+        return AmazonScrapper.scrape(scraper, url, showDomain: showDomain, showBody: showBody, showTitle: showTitle);
       } else if (LinkPreviewScrapper.isUrlTwitter(url)) {
         final twitterResponse = await http.get(
           Uri.parse('https://publish.twitter.com/oembed?url=$url'),
         );
-        return TwitterScrapper.scrape(scraper, twitterResponse.body, url);
+        return TwitterScrapper.scrape(scraper, twitterResponse.body, url, showDomain: showDomain);
       } else {
-        return DefaultScrapper.scrape(scraper, url);
+        return DefaultScrapper.scrape(scraper, url, showDomain: showDomain, showBody: showBody, showTitle: showTitle);
       }
     } catch (e) {
       print('Default scrapper failure Error: $e');
@@ -112,7 +112,7 @@ class LinkPreviewScrapper {
 
   static MatcherGroup getBaseUrlMatchers(String key) {
     return MatcherGroup([
-      TagMatcher(tagToMatch: 'base', attrToReturn: 'href'),
+      TagMatcher(tagToMatch: 'base', attrToReturn: 'href', giveUpAfterTag: 'head'),
     ], key: key);
   }
 
@@ -141,24 +141,19 @@ class LinkPreviewScrapper {
 
   static MatcherGroup getIconMatchers(String key) {
     return MatcherGroup([
-      TagAttributeMatcher(tagToMatch: 'link', attrToMatch: 'rel', attrValueToMatch: 'icon', attrToReturn: 'href'),
-      TagAttributeMatcher(tagToMatch: 'link', attrToMatch: 'rel', attrValueToMatch: 'shortcut icon', attrToReturn: 'href'),
+      TagAttributeMatcher(tagToMatch: 'link', attrToMatch: 'rel', attrValueToMatch: 'icon', attrToReturn: 'href', excludeExt: '.svg'),
+      TagAttributeMatcher(tagToMatch: 'link', attrToMatch: 'rel', attrValueToMatch: 'shortcut icon', attrToReturn: 'href', excludeExt: '.svg'),
+      TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'property', attrValueToMatch: 'og:logo', attrToReturn: 'content', excludeExt: '.svg'),
+      TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'itemprop', attrValueToMatch: 'logo', attrToReturn: 'content', excludeExt: '.svg'),
+      TagAttributeMatcher(tagToMatch: 'img', attrToMatch: 'itemprop', attrValueToMatch: 'logo', attrToReturn: 'src', excludeExt: '.svg'),
     ], key: key);
   }
 
-  static MatcherGroup getPrimaryTitleMatchers(String key) {
+  static MatcherGroup getTitleMatchers(String key) {
     return MatcherGroup([
       TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'property', attrValueToMatch: 'og:title', attrToReturn: 'content'),
       TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'name', attrValueToMatch: 'twitter:title', attrToReturn: 'content'),
-    ], key: key);
-  }
-
-  static MatcherGroup getSecondaryTitleMatchers(String key) {
-    return MatcherGroup([TagMatcher(tagToMatch: 'title')], key: key);
-  }
-
-  static MatcherGroup getLastResortTitleMatchers(String key) {
-    return MatcherGroup([
+      TagMatcher(tagToMatch: 'title', giveUpAfterTag: 'head'),
       TagMatcher(tagToMatch: 'h1'),
       TagMatcher(tagToMatch: 'h2'),
     ], key: key);

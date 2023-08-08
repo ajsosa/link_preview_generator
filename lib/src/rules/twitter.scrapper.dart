@@ -10,8 +10,7 @@ import '../parser/matching/matcher_group.dart';
 import '../parser/matching/matcher_groups.dart';
 
 class TwitterScrapper {
-  static WebInfo scrape(HtmlScraper scraper, String data, String url) {
-
+  static WebInfo scrape(HtmlScraper scraper, String data, String url, {bool showDomain = false}) {
     MatcherGroup domainMatchers = LinkPreviewScrapper.getDomainMatchers('domain');
     MatcherGroup iconMatchers = LinkPreviewScrapper.getIconMatchers('icon');
     MatcherGroup baseUrlMatchers = LinkPreviewScrapper.getBaseUrlMatchers('base');
@@ -26,7 +25,13 @@ class TwitterScrapper {
       TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'property', attrValueToMatch: 'og:video:secure_url', attrToReturn: 'content'),
     ], key: 'video');
 
-    Map<String, String> results = scraper.parseHtml(MatcherGroups([domainMatchers, iconMatchers, baseUrlMatchers, imageMatchers, videoMatchers]));
+    MatcherGroups groups = MatcherGroups([iconMatchers, baseUrlMatchers, imageMatchers, videoMatchers]);
+
+    if (showDomain) {
+      groups.add(domainMatchers);
+    }
+
+    Map<String, String> results = scraper.scrapeHtml(groups);
 
     try {
       final scrappedData = json.decode(data);
@@ -52,8 +57,7 @@ class TwitterScrapper {
         description: "It's what's happening / Twitter",
         domain: 'twitter.com',
         icon: 'https://twitter.com/favicon.ico',
-        image:
-            'https://abs.twimg.com/responsive-web/client-web/icon-ios.b1fc7275.png',
+        image: 'https://abs.twimg.com/responsive-web/client-web/icon-ios.b1fc7275.png',
         video: '',
         title: 'Twitter',
         type: LinkPreviewType.error,

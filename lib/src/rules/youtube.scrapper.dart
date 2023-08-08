@@ -17,7 +17,7 @@ class YouTubeScrapper {
     return null;
   }
 
-  static WebInfo scrape(HtmlScraper scraper, String url) {
+  static WebInfo scrape(HtmlScraper scraper, String url, {bool showBody = false, bool showDomain = false, bool showTitle = false}) {
     MatcherGroup domainMatchers = LinkPreviewScrapper.getDomainMatchers('domain');
     MatcherGroup iconMatchers = LinkPreviewScrapper.getIconMatchers('icon');
 
@@ -28,12 +28,23 @@ class YouTubeScrapper {
 
     RegExp titleReg = RegExp('"title":"(.+?)"');
 
-    MatcherGroup titleMatchers = MatcherGroup([
-      TagMatcher(tagToMatch: 'title'),
-      TagMatcher(tagToMatch: 'script', contentRegex: titleReg)
-    ], key: 'title');
+    MatcherGroup titleMatchers = MatcherGroup([TagMatcher(tagToMatch: 'title'), TagMatcher(tagToMatch: 'script', contentRegex: titleReg)], key: 'title');
 
-    Map<String, String> results = scraper.parseHtml(MatcherGroups([domainMatchers, iconMatchers, descriptionMatchers, titleMatchers]));
+    MatcherGroups groups = MatcherGroups([iconMatchers]);
+
+    if (showBody) {
+      groups.add(descriptionMatchers);
+    }
+
+    if (showTitle) {
+      groups.add(titleMatchers);
+    }
+
+    if (showDomain) {
+      groups.add(domainMatchers);
+    }
+
+    Map<String, String> results = scraper.scrapeHtml(groups);
 
     try {
       final id = getYouTubeVideoId(url);

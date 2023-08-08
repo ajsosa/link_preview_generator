@@ -126,8 +126,7 @@ class LinkPreviewGenerator extends StatefulWidget {
     this.proxyUrl,
     this.errorWidget,
     this.errorBody = 'Oops! Unable to parse the url.',
-    this.errorImage =
-        'https://raw.githubusercontent.com/ghpranav/link_preview_generator/main/assets/giphy.gif',
+    this.errorImage = 'https://raw.githubusercontent.com/ghpranav/link_preview_generator/main/assets/giphy.gif',
     this.errorTitle = 'Something went wrong!',
     this.borderRadius = 12.0,
     this.boxShadow,
@@ -146,10 +145,7 @@ class _LinkPreviewGeneratorState extends State<LinkPreviewGenerator> {
   @override
   Widget build(BuildContext context) {
     final info = _info;
-    var _height = (widget.linkPreviewStyle == LinkPreviewStyle.small ||
-            !widget.showGraphic)
-        ? MediaQuery.of(context).size.height * 0.15
-        : MediaQuery.of(context).size.height * 0.30;
+    var _height = (widget.linkPreviewStyle == LinkPreviewStyle.small || !widget.showGraphic) ? MediaQuery.of(context).size.height * 0.15 : MediaQuery.of(context).size.height * 0.30;
 
     if (_loading) {
       return widget.placeholderWidget ??
@@ -172,25 +168,18 @@ class _LinkPreviewGeneratorState extends State<LinkPreviewGenerator> {
           _height,
           title: widget.errorTitle,
           desc: widget.errorBody,
-          image: (widget.proxyUrl ?? '') +
-              (img.trim() == '' ? widget.errorImage : img),
+          image: (widget.proxyUrl ?? '') + (img.trim() == '' ? widget.errorImage : img),
         );
       }
     }
 
     return _info == null
-        ? widget.errorWidget ??
-            _buildPlaceHolder(widget.backgroundColor, _height)
+        ? widget.errorWidget ?? _buildPlaceHolder(widget.backgroundColor, _height)
         : _buildLinkContainer(
             _height,
-            domain:
-                LinkPreviewAnalyzer.isNotEmpty(info!.domain) ? info.domain : '',
-            title: LinkPreviewAnalyzer.isNotEmpty(info.title)
-                ? info.title
-                : widget.errorTitle,
-            desc: LinkPreviewAnalyzer.isNotEmpty(info.description)
-                ? info.description
-                : widget.errorBody,
+            domain: LinkPreviewAnalyzer.isNotEmpty(info!.domain) ? info.domain : '',
+            title: LinkPreviewAnalyzer.isNotEmpty(info.title) ? info.title : widget.errorTitle,
+            desc: LinkPreviewAnalyzer.isNotEmpty(info.description) ? info.description : widget.errorBody,
             image: LinkPreviewAnalyzer.isNotEmpty(info.image)
                 ? info.image
                 : LinkPreviewAnalyzer.isNotEmpty(info.icon)
@@ -315,8 +304,8 @@ class _LinkPreviewGeneratorState extends State<LinkPreviewGenerator> {
 
   Future<void> _getInfo() async {
     if (_url.startsWith('http') || _url.startsWith('https')) {
-      _info = await LinkPreviewAnalyzer.getInfo(_url,
-          cacheDuration: widget.cacheDuration, multimedia: true) as WebInfo?;
+      _info = await LinkPreviewAnalyzer.getInfo(_url, showBody: widget.showBody, showDomain: widget.showDomain, showTitle: widget.showTitle, cacheDuration: widget.cacheDuration, multimedia: true)
+          as WebInfo?;
     } else {
       print('Error: $_url is not starting with either http or https.');
     }

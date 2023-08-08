@@ -7,13 +7,11 @@ import '../parser/matching/matcher_group.dart';
 import '../parser/matching/matcher_groups.dart';
 
 class AmazonScrapper {
-  static WebInfo scrape(HtmlScraper scraper, String url) {
+  static WebInfo scrape(HtmlScraper scraper, String url, {bool showBody = false, bool showDomain = false, bool showTitle = false}) {
     MatcherGroup domainMatchers = LinkPreviewScrapper.getDomainMatchers('domain');
     MatcherGroup iconMatchers = LinkPreviewScrapper.getIconMatchers('icon');
     MatcherGroup baseUrlMatchers = LinkPreviewScrapper.getBaseUrlMatchers('base');
-    MatcherGroup mainTitleMatchers = LinkPreviewScrapper.getPrimaryTitleMatchers('mainTitle');
-    MatcherGroup secondTitleMatchers = LinkPreviewScrapper.getSecondaryTitleMatchers('secondTitle');
-    MatcherGroup lastTitleMatchers = LinkPreviewScrapper.getLastResortTitleMatchers('lastTitle');
+    MatcherGroup titleMatchers = LinkPreviewScrapper.getTitleMatchers('title');
 
     MatcherGroup imageMatchers = MatcherGroup([
       TagAttributeMatcher(tagToMatch: '*', attrToMatch: 'class', attrValueToMatch: 'a-dynamic-image', attrToReturn: 'data-old-hires'),
@@ -24,16 +22,21 @@ class AmazonScrapper {
       TagAttributeMatcher(tagToMatch: 'meta', attrToMatch: 'name', attrValueToMatch: 'description', attrToReturn: 'content'),
     ], key: 'description');
 
-    Map<String, String> results = scraper.parseHtml(MatcherGroups([
-      domainMatchers,
-      iconMatchers,
-      baseUrlMatchers,
-      imageMatchers,
-      descriptionMatchers,
-      mainTitleMatchers,
-      secondTitleMatchers,
-      lastTitleMatchers,
-    ]));
+    MatcherGroups groups = MatcherGroups([iconMatchers, baseUrlMatchers, imageMatchers]);
+
+    if (showBody) {
+      groups.add(descriptionMatchers);
+    }
+
+    if (showDomain) {
+      groups.add(domainMatchers);
+    }
+
+    if (showTitle) {
+      groups.add(titleMatchers);
+    }
+
+    Map<String, String> results = scraper.scrapeHtml(groups);
 
     try {
       var baseUrl = LinkPreviewScrapper.getBaseUrl(results['base'], url);
@@ -46,7 +49,7 @@ class AmazonScrapper {
         icon: LinkPreviewScrapper.getIcon(results['icon'], url) ?? '',
         image: image ?? '',
         video: '',
-        title: results['mainTitle'] ?? results['secondTitle'] ?? results['lastTitle'] ?? '',
+        title: results['title'] ?? '',
         type: LinkPreviewType.amazon,
       );
     } catch (e) {
